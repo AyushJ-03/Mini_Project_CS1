@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="css/style.css" type="text/css">
+    <title>Developer Directory</title>
+    <style>
+        #map { width: 400px; height: 250px; float: left; margin-right: 10px; }
+        #location-info { margin-top: 10px; }
+        #developer-list { margin-top: 20px; }
+        .developer-item { margin: 10px 0; }
+        #map-container { overflow: hidden; }
+    </style>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+<body>
+    <div id="container">
+        <header>
+            <h1><span class="blue-text"></span> Developer Directory</h1>
+            <h2>Find A Developer <span class="white-text">NOW</span></h2>
+        </header>
+
+        <nav id="menu">
+			<ul>
+				<li class="menuitem"><a href="index.html">Home</a></li>
+				<li class="menuitem"><a href="about.html">About Us</a></li>
+				<li class="menuitem"><a href="browse.html">Browse Developers</a></li>
+				<li class="menuitem"><a href="register.html">Register As Developer</a></li>
+				<li class="menuitem"><a href="contact.html">Contact Us</a></li>
+			</ul>
+	    </nav>
+		 
+		 <aside>
+			<nav id="leftmenu">
+			<h3>Links</h3>
+				<ul>
+					<li><a href="browse.html">Python</a></li>
+					<li><a href="browse.html">JAVA</a></li>
+					<li><a href="browse.html">React JS</a></li>
+					<li><a href="browse.html">Video Editing</a></li>
+					<li><a href="browse.html">Web design</a></li>
+					<li><a href="browse.html">Web Programming</a></li>
+					<li><a href="browse.html">Content Creation</a></li>
+					<li><a href="browse.html">Internet Marketing</a></li>
+					<li><a href="browse.html">Graphic Designing</a></li>
+				</ul>
+			</nav>
+		</aside>
+
+        <section>
+            <h3>Register As A Developer</h3>
+            <form id="developer-form">
+                <p>
+                    <label for="first_name">First Name:</label>
+                    <input type="text" id="first_name" name="first_name" required>
+                </p>
+                <p>
+                    <label for="last_name">Last Name:</label>
+                    <input type="text" id="last_name" name="last_name" required>
+                </p>
+                <p>
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" required>
+                </p>
+                <p>
+                    <div id="map"></div>
+                    <div id="location-info">
+                        <strong>Address:</strong> <span id="address">Not set</span>
+                    </div>
+                </p>
+                <p>
+                    <button type="submit">Register</button>
+                </p>
+            </form>
+            <h3>Registered Developers</h3>
+            <div id="developer-list">
+                <ul id="developer-ul"></ul>
+            </div>
+        </section>
+    </div>
+    <footer>
+        Copyright &copy; 2024, Web Developer Directory
+    </footer>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const form = document.getElementById('developer-form');
+        const developerList = document.getElementById('developer-ul');
+        const addressDisplay = document.getElementById('address');
+        let map, marker;
+
+        function initMap() {
+            const defaultLocation = { lat: 28.61519, lng: 77.35890 }; // Default to Noida
+            map = L.map('map').setView([defaultLocation.lat, defaultLocation.lng], 13);
+
+            // Load OpenStreetMap tiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+            }).addTo(map);
+
+            // Add a draggable marker
+            marker = L.marker([defaultLocation.lat, defaultLocation.lng], { draggable: true }).addTo(map);
+
+            // Update address when marker is dragged
+            marker.on('dragend', function () {
+                const position = marker.getLatLng();
+                fetchAddress(position.lat, position.lng);
+            });
+
+            // Fetch the address for the initial position
+            fetchAddress(defaultLocation.lat, defaultLocation.lng);
+        }
+
+        function fetchAddress(lat, lng) {
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`)
+                .then(response => response.json())
+                .then(data => {
+                    addressDisplay.textContent = data.display_name || 'Unable to retrieve address';
+                })
+                .catch(() => {
+                    addressDisplay.textContent = 'Unable to retrieve address';
+                });
+        }
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault(); // Prevent form submission
+
+            const firstName = document.getElementById('first_name').value.trim();
+            const lastName = document.getElementById('last_name').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const address = addressDisplay.textContent.trim();
+
+            if (firstName && lastName && email && address !== 'Not set') {
+                const listItem = document.createElement('li');
+                listItem.className = 'developer-item';
+                listItem.textContent = `${firstName} ${lastName} - ${email} - ${address}`;
+                developerList.appendChild(listItem);
+
+                form.reset();
+                addressDisplay.textContent = 'Not set';
+            } else {
+                alert('Please fill out all fields and set your location.');
+            }
+        });
+
+        window.onload = initMap;
+    </script>
+</body>
+</html>

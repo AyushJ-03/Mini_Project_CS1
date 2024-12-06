@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="css/style.css" type="text/css">
+    <title>Developer Directory</title>
+    <style>
+        #map { width: 400px; height: 250px; float: left; margin-right: 10px; }
+        #location-info { margin-top: 10px; }
+        #developer-list { margin-top: 20px; }
+        .developer-item { margin: 10px 0; }
+    </style>
+    <script src="https://maps.google.com/maps/api/js?sensor=false"></script>
+</head>
+<body>
+    <div id="container">
+        <header>
+            <h1><span class="blue-text"></span> Developer Directory</h1>
+            <h2>Find A Developer <span class="white-text">NOW</span></h2>
+        </header>
+
+        <section>
+            <h3>Register As A Developer</h3>
+            <form id="developer-form">
+                <p>
+                    <label for="first_name">First Name:</label>
+                    <input type="text" id="first_name" name="first_name" required>
+                </p>
+                <p>
+                    <label for="last_name">Last Name:</label>
+                    <input type="text" id="last_name" name="last_name" required>
+                </p>
+                <p>
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" required>
+                </p>
+                <p>
+                    <label for="location">Location:</label>
+                    <div id="map"></div>
+                    <div id="location-info">
+                        <strong>Address:</strong> <span id="address">Not set</span>
+                    </div>
+                </p>
+                <p>
+                    <button type="submit">Register</button>
+                </p>
+            </form>
+            <h3>Registered Developers</h3>
+            <div id="developer-list">
+                <ul id="developer-ul"></ul>
+            </div>
+        </section>
+
+    </div>
+    <footer>
+        Copyright &copy; 2024, Web Developer Directory
+    </footer>
+
+    <script>
+        const form = document.getElementById('developer-form');
+        const developerList = document.getElementById('developer-ul');
+        const addressDisplay = document.getElementById('address');
+        let map, marker;
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault(); // Prevent form submission
+
+            const firstName = document.getElementById('first_name').value.trim();
+            const lastName = document.getElementById('last_name').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const address = addressDisplay.textContent.trim();
+
+            if (firstName && lastName && email && address !== 'Not set') {
+                const listItem = document.createElement('li');
+                listItem.className = 'developer-item';
+                listItem.textContent = `${firstName} ${lastName} - ${email} - ${address}`;
+                developerList.appendChild(listItem);
+
+                form.reset();
+                addressDisplay.textContent = 'Not set';
+            } else {
+                alert('Please fill out all fields and set your location.');
+            }
+        });
+
+        function initMap() {
+            const defaultLocation = { lat: 37.7749, lng: -122.4194 }; // Default to San Francisco
+            map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 10,
+                center: defaultLocation
+            });
+
+            marker = new google.maps.Marker({
+                position: defaultLocation,
+                map: map,
+                draggable: true,
+                title: "Drag to adjust location"
+            });
+
+            updateAddress(defaultLocation);
+
+            google.maps.event.addListener(marker, 'dragend', function () {
+                const newPosition = marker.getPosition();
+                updateAddress({ lat: newPosition.lat(), lng: newPosition.lng() });
+            });
+        }
+
+        function updateAddress(latlng) {
+            const geocoder = new google.maps.Geocoder();
+            geocoder.geocode({ location: latlng }, function (results, status) {
+                if (status === google.maps.GeocoderStatus.OK && results[0]) {
+                    addressDisplay.textContent = results[0].formatted_address;
+                } else {
+                    addressDisplay.textContent = 'Unable to retrieve address';
+                }
+            });
+        }
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition((position) => {
+                const userLocation = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+                map.setCenter(userLocation);
+                marker.setPosition(userLocation);
+                updateAddress(userLocation);
+            });
+        }
+
+        // Initialize the map after the page loads
+        window.onload = initMap;
+    </script>
+</body>
+</html>
